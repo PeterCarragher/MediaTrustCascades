@@ -9,9 +9,12 @@ export function readParams() {
     factChecksEnabled:      check('fact-checks'),
     layoffsEnabled:         check('layoffs'),
     acquisitionsEnabled:    check('acquisitions'),
+    // publication / copying
+    baseLikelihood:      val('base-likelihood'),
+    adjacencyMultiplier: val('adjacency-multiplier'),
+    baseCopyRate:        val('base-copy-rate'),
     // outlet / article
-    outletSpread:    val('outlet-spread'),
-    copyRadius:      val('copy-radius'),
+    outletSpread: val('outlet-spread'),
     articleLifespan: val('article-lifespan'),
     coolingDuration: val('cooling-duration'),
     // fact checks

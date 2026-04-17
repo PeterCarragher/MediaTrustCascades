@@ -2,10 +2,11 @@ import { EMPTY, ARTICLE, ERROR, COOLING } from '../sim/grid.js'
 
 // Cell state → [R, G, B]
 const COLORS = new Uint8Array([
-  245, 245, 245,  // EMPTY   — near-white
-   20,  20,  20,  // ARTICLE — near-black
+   10,  10,  10,  // EMPTY   — near-black
+  235, 235, 235,  // ARTICLE — near-white
   220,  40,  40,  // ERROR   — red
-  160, 160, 160,  // COOLING — grey
+  255, 190,   0,  // COOLING — yellow (visible trust damage)    
+  // 120, 120, 120,  // COOLING — grey
 ])
 
 // Distinct outlet centroid marker colors (hue stepped by 45°, s=80%, l=58%)
