@@ -16,7 +16,6 @@
       font: 12px/1.5 monospace;
     }
 
-    /* ── Canvas area ──────────────────────────────────────────── */
     #canvas-area {
       flex: 1;
       display: flex;
@@ -28,14 +27,12 @@
 
     canvas {
       image-rendering: pixelated;
-      /* Fill available square, keeping aspect ratio */
       width:  min(calc(100vh - 32px), calc(100vw - 292px));
       height: min(calc(100vh - 32px), calc(100vw - 292px));
       border: 1px solid #2a2a2a;
       display: block;
     }
 
-    /* ── Controls sidebar ─────────────────────────────────────── */
     #controls {
       width: 260px;
       flex-shrink: 0;
@@ -68,32 +65,28 @@
       gap: 6px;
     }
 
-    .section-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 2px;
-    }
-
-    .section-title { color: #aaa; font-weight: bold; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
+    .section-title { color: #aaa; font-weight: bold; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 2px; }
 
     .row { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
     .row label { color: #777; flex: 1; }
     .row .num  { color: #bbb; min-width: 36px; text-align: right; font-size: 11px; }
 
-    input[type="range"] {
-      width: 90px; flex-shrink: 0;
-      accent-color: #555;
-      cursor: pointer;
+    input[type="range"] { width: 90px; flex-shrink: 0; accent-color: #555; cursor: pointer; }
+
+    .trust-scale {
+      height: 10px;
+      border-radius: 3px;
+      background: linear-gradient(to right, #d41111, #11d411, #1111d4);
+      margin-top: 2px;
     }
-    input[type="checkbox"] { accent-color: #888; cursor: pointer; }
+    .scale-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: #555;
+      margin-top: 2px;
+    }
 
-    /* ── Legend ───────────────────────────────────────────────── */
-    .legend { display: flex; flex-direction: column; gap: 5px; }
-    .legend-row { display: flex; align-items: center; gap: 7px; color: #666; font-size: 11px; }
-    .swatch { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
-
-    /* ── Stats ────────────────────────────────────────────────── */
     .stats-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -118,148 +111,89 @@
     <button id="btn-reset">Reset</button>
   </div>
 
-  <!-- Speed + grid size -->
+  <!-- Simulation speed -->
   <div class="section">
     <div class="row">
       <label>Target FPS</label>
-      <input type="range" id="target-fps" min="1" max="60" step="1" value="60">
-      <span class="num" id="target-fps-val">60</span>
+      <input type="range" id="target-fps" min="1" max="60" step="1" value="28">
+      <span class="num" id="target-fps-val">28</span>
     </div>
     <div class="row">
       <label>Steps / frame</label>
-      <input type="range" id="sim-speed" min="1" max="12" step="1" value="2">
-      <span class="num" id="sim-speed-val">2</span>
+      <input type="range" id="sim-speed" min="1" max="20" step="1" value="20">
+      <span class="num" id="sim-speed-val">20</span>
     </div>
     <div class="row">
       <label>Grid size ↺</label>
-      <input type="range" id="grid-size" min="50" max="400" step="10" value="200">
+      <input type="range" id="grid-size" min="10" max="200" step="5" value="200">
       <span class="num" id="grid-size-val">200</span>
     </div>
   </div>
 
-  <!-- Publication / copying -->
+  <!-- Trust dynamics -->
   <div class="section">
-    <div class="section-title" style="margin-bottom:6px">Publication</div>
+    <div class="section-title">Trust</div>
     <div class="row">
-      <label>Base likelihood</label>
-      <input type="range" id="base-likelihood" min="0.01" max="0.2" step="0.005" value="0.01">
-      <span class="num" id="base-likelihood-val">0.01</span>
+      <label>Build rate</label>
+      <input type="range" id="trust-build-rate" min="0.0001" max="0.01" step="0.0001" value="0.0007">
+      <span class="num" id="trust-build-rate-val">0.0007</span>
     </div>
     <div class="row">
-      <label>Adjacency ×</label>
-      <input type="range" id="adjacency-multiplier" min="1" max="10" step="0.1" value="3">
-      <span class="num" id="adjacency-multiplier-val">3</span>
-    </div>
-    <div class="row">
-      <label>Copy rate</label>
-      <input type="range" id="base-copy-rate" min="0" max="1" step="0.01" value="0.4">
-      <span class="num" id="base-copy-rate-val">0.4</span>
+      <label>Threshold</label>
+      <input type="range" id="trust-threshold" min="0" max="1" step="0.01" value="0.5">
+      <span class="num" id="trust-threshold-val">0.5</span>
     </div>
   </div>
 
-  <!-- Outlet influence -->
+  <!-- Error events -->
   <div class="section">
-    <div class="section-header">
-      <span class="section-title">Outlet influence</span>
-      <input type="checkbox" id="outlet-influence" checked>
+    <div class="section-title">Errors</div>
+    <div class="row">
+      <label>Check every N ticks</label>
+      <input type="range" id="factcheck-interval" min="1" max="200" step="1" value="4">
+      <span class="num" id="factcheck-interval-val">4</span>
     </div>
     <div class="row">
-      <label>Spread (cells)</label>
-      <input type="range" id="outlet-spread" min="5" max="80" step="1" value="35">
-      <span class="num" id="outlet-spread-val">35</span>
+      <label>Error probability</label>
+      <input type="range" id="error-rate" min="0" max="0.2" step="0.001" value="0.01">
+      <span class="num" id="error-rate-val">0.01</span>
     </div>
     <div class="row">
-      <label>Lifespan (ticks)</label>
-      <input type="range" id="article-lifespan" min="1" max="100" step="1" value="10">
-      <span class="num" id="article-lifespan-val">10</span>
+      <label>Mean loss</label>
+      <input type="range" id="error-mean" min="0.01" max="0.5" step="0.01" value="0.2">
+      <span class="num" id="error-mean-val">0.2</span>
+    </div>
+    <div class="row">
+      <label>Std deviation</label>
+      <input type="range" id="error-std" min="0" max="0.3" step="0.01" value="0.05">
+      <span class="num" id="error-std-val">0.05</span>
     </div>
   </div>
 
-  <!-- Fact checks -->
+  <!-- Propagation -->
   <div class="section">
-    <div class="section-header">
-      <span class="section-title">Fact checks</span>
-      <input type="checkbox" id="fact-checks" checked>
-    </div>
+    <div class="section-title">Propagation</div>
     <div class="row">
-      <label>Rate / article</label>
-      <input type="range" id="fact-check-rate" min="0.0001" max="0.01" step="0.0001" value="0.001">
-      <span class="num" id="fact-check-rate-val">0.001</span>
-    </div>
-    <div class="row">
-      <label>Error lifetime</label>
-      <input type="range" id="factcheck-lifetime" min="10" max="500" step="10" value="200">
-      <span class="num" id="factcheck-lifetime-val">200</span>
-    </div>
-    <div class="row">
-      <label>Propagation</label>
-      <input type="range" id="error-propagation" min="0" max="1" step="0.01" value="0.8">
-      <span class="num" id="error-propagation-val">0.8</span>
-    </div>
-    <div class="row">
-      <label>Cooling (ticks)</label>
-      <input type="range" id="cooling-duration" min="1" max="300" step="1" value="10">
-      <span class="num" id="cooling-duration-val">1t0</span>
+      <label>Copy likelihood</label>
+      <input type="range" id="copy-likelihood" min="0" max="1" step="0.01" value="0.44">
+      <span class="num" id="copy-likelihood-val">0.44</span>
     </div>
   </div>
 
-  <!-- Layoffs -->
+  <!-- Color scale -->
   <div class="section">
-    <div class="section-header">
-      <span class="section-title">Layoffs</span>
-      <input type="checkbox" id="layoffs" checked>
-    </div>
-    <div class="row">
-      <label>Rate / outlet</label>
-      <input type="range" id="layoff-rate" min="0.001" max="0.05" step="0.001" value="0.005">
-      <span class="num" id="layoff-rate-val">0.005</span>
-    </div>
-    <div class="row">
-      <label>Pub reduction</label>
-      <input type="range" id="layoff-effect" min="0.05" max="0.5" step="0.05" value="0.2">
-      <span class="num" id="layoff-effect-val">0.2</span>
-    </div>
-    <div class="row">
-      <label>Copy boost</label>
-      <input type="range" id="layoff-copy-boost" min="0.01" max="0.2" step="0.01" value="0.05">
-      <span class="num" id="layoff-copy-boost-val">0.05</span>
-    </div>
-  </div>
-
-  <!-- Acquisitions -->
-  <div class="section">
-    <div class="section-header">
-      <span class="section-title">Acquisitions</span>
-      <input type="checkbox" id="acquisitions" checked>
-    </div>
-    <div class="row">
-      <label>Rate / tick</label>
-      <input type="range" id="acquisition-rate" min="0.0005" max="0.005" step="0.0005" value="0.001">
-      <span class="num" id="acquisition-rate-val">0.001</span>
-    </div>
-    <div class="row">
-      <label>Pub boost</label>
-      <input type="range" id="acquisition-boost" min="1" max="2" step="0.05" value="1.3">
-      <span class="num" id="acquisition-boost-val">1.3</span>
-    </div>
-  </div>
-
-  <!-- Legend -->
-  <div class="section legend">
-    <div class="legend-row"><div class="swatch" style="background:#ebebeb"></div>Article</div>
-    <div class="legend-row"><div class="swatch" style="background:#dc2828"></div>Error (fact-checked)</div>
-    <div class="legend-row"><div class="swatch" style="background:#787878"></div>Cooling (trust damage)</div>
-    <div class="legend-row"><div class="swatch" style="background:#0a0a0a;border:1px solid #444"></div>Empty</div>
-    <div class="legend-row"><div class="swatch" style="background:linear-gradient(135deg,#e04040,#40e040,#4040e0)"></div>Outlet centroid</div>
+    <div class="section-title">Trust scale</div>
+    <div class="trust-scale"></div>
+    <div class="scale-labels"><span>0 — low</span><span>0.5</span><span>1 — high</span></div>
   </div>
 
   <!-- Live stats -->
   <div class="section">
     <div class="stats-grid">
-      <div>Articles</div><div><span id="stat-articles">0</span></div>
-      <div>Errors</div>  <div><span id="stat-errors">0</span></div>
-      <div>Cooling</div> <div><span id="stat-cooling">0</span></div>
-      <div>Outlets</div> <div><span id="stat-outlets">8</span></div>
+      <div>Avg trust</div>  <div><span id="stat-avg">1.000</span></div>
+      <div>Min trust</div>  <div><span id="stat-min">1.000</span></div>
+      <div>Max trust</div>  <div><span id="stat-max">1.000</span></div>
+      <div>Wavefront</div>  <div><span id="stat-front">0</span></div>
     </div>
   </div>
 </div>
