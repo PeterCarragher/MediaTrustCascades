@@ -36,7 +36,7 @@ function tickPropagation(grid, params) {
   for (const [eventId, front] of grid.front) {
     const next = new Set()
     for (const idx of front) {
-      for (const nb of grid.neighbors(idx)) {
+      for (const nb of grid.neighbors(idx, params.diagonal)) {
         if (rand() < params.copyLikelihood && applyError(grid, nb, eventId, params))
           next.add(nb)
       }
@@ -59,14 +59,32 @@ function maybeSpawnError(grid, params, tick, nextEventId) {
   return eventId
 }
 
+// Diffuse trust toward the local neighborhood average.
+// Each outlet moves a fraction `proximity` of the way toward its neighbors' mean.
+// Uses a snapshot of current trust so updates don't cascade within one tick.
+function applyProximity(grid, snapshot, params) {
+  if (params.proximity === 0) return
+  const { trust, width, height } = grid
+  snapshot.set(trust)
+  for (let idx = 0; idx < trust.length; idx++) {
+    const nbs = grid.neighbors(idx, params.diagonal)
+    let sum = 0
+    for (const nb of nbs) sum += snapshot[nb]
+    const avg = sum / nbs.length
+    trust[idx] = clamp01(trust[idx] + params.proximity * (avg - trust[idx]))
+  }
+}
+
 export function createSimulation(width, height) {
-  const grid = new Grid(width, height)
+  const grid     = new Grid(width, height)
+  const snapshot = new Float32Array(width * height)  // reused buffer for proximity
   let tick = 0, nextEventId = 0
 
   function step(params) {
     buildTrust(grid, params)
     tickPropagation(grid, params)
     nextEventId = maybeSpawnError(grid, params, tick++, nextEventId)
+    applyProximity(grid, snapshot, params)
   }
 
   return { grid, step }
