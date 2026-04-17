@@ -98,7 +98,7 @@ function spawnArticles(grid, outlets, params) {
 function fireFactChecks(grid, params) {
   for (const [idx] of grid.articles) {
     if (grid.cells[idx] !== ARTICLE) continue
-    if (rand() < params.factCheckRate) grid.cascade(idx, params.errorPropagationLikelihood)
+    if (rand() < params.factCheckRate) grid.cascade(idx, params.factcheckLifetime)
   }
 }
 
@@ -129,6 +129,7 @@ export function createSimulation(width, height, numOutlets) {
   function step(params) {
     spawnArticles(grid, outlets, params)
     if (params.factChecksEnabled)   fireFactChecks(grid, params)
+    grid.tickCascade(params.errorPropagationLikelihood, params.factcheckLifetime)
     if (params.layoffsEnabled)      fireLayoffs(outlets, params)
     if (params.acquisitionsEnabled) fireAcquisitions(outlets, params)
     grid.tickArticles(params.coolingDuration)

@@ -5,12 +5,13 @@ export const COOLING = 3
 
 export class Grid {
   constructor(width, height) {
-    this.width    = width
-    this.height   = height
-    this.cells    = new Uint8Array(width * height)
-    this.articles = new Map()  // idx → { outletId, lifespan, copiedFrom }
-    this.cooling  = new Map()  // idx → timerRemaining
-    this.copiedBy = new Map()  // idx → Set<idx>  (reverse copy index for cascades)
+    this.width          = width
+    this.height         = height
+    this.cells          = new Uint8Array(width * height)
+    this.articles       = new Map()  // idx → { outletId, lifespan, copiedFrom }
+    this.cooling        = new Map()  // idx → timerRemaining
+    this.copiedBy       = new Map()  // idx → Set<idx>  (reverse copy index)
+    this.cascadeFront   = new Set()  // current error wavefront, advanced one hop per tick
   }
 
   idx(x, y)      { return y * this.width + x }
@@ -27,19 +28,43 @@ export class Grid {
     }
   }
 
-  // BFS: mark startIdx as ERROR, then propagate to each downstream copy with
-  // probability `propagationLikelihood`. Cascade size is emergent from the
-  // copy-network topology and this per-edge propagation probability.
-  cascade(startIdx, propagationLikelihood) {
-    const queue = [startIdx]
-    while (queue.length) {
-      const idx = queue.pop()
-      if (this.cells[idx] !== ARTICLE) continue
+  // Mark startIdx as ERROR, reset its lifespan to factcheckLifetime, and
+  // add it to the wavefront. The error spreads one hop per tick via tickCascade().
+  cascade(startIdx, factcheckLifetime) {
+    if (this.cells[startIdx] !== ARTICLE) return
+    this.cells[startIdx] = ERROR
+    this.articles.get(startIdx).lifespan = factcheckLifetime
+    this.cascadeFront.add(startIdx)
+  }
+
+  // Advance the error wavefront by exactly one hop.
+  // Each copy edge (upstream and downstream) fires independently
+  // with probability `propagationLikelihood`. Newly errored articles
+  // have their lifespan reset to `factcheckLifetime`.
+  tickCascade(propagationLikelihood, factcheckLifetime) {
+    if (!this.cascadeFront.size) return
+    const next = new Set()
+
+    const markError = (idx) => {
       this.cells[idx] = ERROR
+      this.articles.get(idx).lifespan = factcheckLifetime
+      next.add(idx)
+    }
+
+    for (const idx of this.cascadeFront) {
+      // Downstream: articles that copied this one
       const children = this.copiedBy.get(idx)
       if (children) for (const child of children)
-        if (Math.random() < propagationLikelihood) queue.push(child)
+        if (this.cells[child] === ARTICLE && Math.random() < propagationLikelihood)
+          markError(child)
+
+      // Upstream: the article this one was copied from
+      const src = this.articles.get(idx)?.copiedFrom
+      if (src != null && this.cells[src] === ARTICLE && Math.random() < propagationLikelihood)
+        markError(src)
     }
+
+    this.cascadeFront = next
   }
 
   tickArticles(coolingDuration) {

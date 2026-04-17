@@ -18,7 +18,8 @@ export function readParams() {
     articleLifespan: val('article-lifespan'),
     coolingDuration: val('cooling-duration'),
     // fact checks
-    factCheckRate:             val('fact-check-rate'),
+    factCheckRate:              val('fact-check-rate'),
+    factcheckLifetime:          val('factcheck-lifetime'),
     errorPropagationLikelihood: val('error-propagation'),
     // layoffs
     layoffRate:      val('layoff-rate'),
