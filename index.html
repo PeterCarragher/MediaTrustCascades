@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MediaTrustCascades</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      background: #111;
+      color: #ddd;
+      font: 12px/1.5 monospace;
+    }
+
+    /* ── Canvas area ──────────────────────────────────────────── */
+    #canvas-area {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      min-width: 0;
+    }
+
+    canvas {
+      image-rendering: pixelated;
+      /* Fill available square, keeping aspect ratio */
+      width:  min(calc(100vh - 32px), calc(100vw - 292px));
+      height: min(calc(100vh - 32px), calc(100vw - 292px));
+      border: 1px solid #2a2a2a;
+      display: block;
+    }
+
+    /* ── Controls sidebar ─────────────────────────────────────── */
+    #controls {
+      width: 260px;
+      flex-shrink: 0;
+      background: #161616;
+      border-left: 1px solid #2a2a2a;
+      overflow-y: auto;
+      padding: 14px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    h1 { font-size: 11px; color: #666; letter-spacing: 0.05em; text-transform: uppercase; }
+
+    .btn-row { display: flex; gap: 6px; }
+    button {
+      flex: 1; padding: 6px 0;
+      background: #252525; border: 1px solid #333;
+      color: #ccc; cursor: pointer; border-radius: 3px;
+      font: inherit;
+    }
+    button:hover { background: #2e2e2e; }
+
+    .section {
+      border: 1px solid #252525;
+      border-radius: 4px;
+      padding: 9px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2px;
+    }
+
+    .section-title { color: #aaa; font-weight: bold; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
+
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+    .row label { color: #777; flex: 1; }
+    .row .num  { color: #bbb; min-width: 36px; text-align: right; font-size: 11px; }
+
+    input[type="range"] {
+      width: 90px; flex-shrink: 0;
+      accent-color: #555;
+      cursor: pointer;
+    }
+    input[type="checkbox"] { accent-color: #888; cursor: pointer; }
+
+    /* ── Legend ───────────────────────────────────────────────── */
+    .legend { display: flex; flex-direction: column; gap: 5px; }
+    .legend-row { display: flex; align-items: center; gap: 7px; color: #666; font-size: 11px; }
+    .swatch { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+    /* ── Stats ────────────────────────────────────────────────── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px 8px;
+      font-size: 11px;
+      color: #666;
+    }
+    .stats-grid span { color: #999; }
+  </style>
+</head>
+<body>
+
+<div id="canvas-area">
+  <canvas id="sim-canvas"></canvas>
+</div>
+
+<div id="controls">
+  <h1>MediaTrustCascades</h1>
+
+  <div class="btn-row">
+    <button id="btn-play">Pause</button>
+    <button id="btn-reset">Reset</button>
+  </div>
+
+  <!-- Speed -->
+  <div class="section">
+    <div class="row">
+      <label>Steps / frame</label>
+      <input type="range" id="sim-speed" min="1" max="12" step="1" value="2">
+      <span class="num" id="sim-speed-val">2</span>
+    </div>
+  </div>
+
+  <!-- Outlet influence -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">Outlet influence</span>
+      <input type="checkbox" id="outlet-influence" checked>
+    </div>
+    <div class="row">
+      <label>Spread (cells)</label>
+      <input type="range" id="outlet-spread" min="5" max="80" step="1" value="35">
+      <span class="num" id="outlet-spread-val">35</span>
+    </div>
+    <div class="row">
+      <label>Copy radius</label>
+      <input type="range" id="copy-radius" min="1" max="20" step="1" value="8">
+      <span class="num" id="copy-radius-val">8</span>
+    </div>
+    <div class="row">
+      <label>Lifespan (ticks)</label>
+      <input type="range" id="article-lifespan" min="20" max="500" step="10" value="150">
+      <span class="num" id="article-lifespan-val">150</span>
+    </div>
+  </div>
+
+  <!-- Fact checks -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">Fact checks</span>
+      <input type="checkbox" id="fact-checks" checked>
+    </div>
+    <div class="row">
+      <label>Rate / article</label>
+      <input type="range" id="fact-check-rate" min="0.0001" max="0.01" step="0.0001" value="0.001">
+      <span class="num" id="fact-check-rate-val">0.001</span>
+    </div>
+    <div class="row">
+      <label>Propagation</label>
+      <input type="range" id="error-propagation" min="0" max="1" step="0.01" value="0.8">
+      <span class="num" id="error-propagation-val">0.8</span>
+    </div>
+    <div class="row">
+      <label>Cooling (ticks)</label>
+      <input type="range" id="cooling-duration" min="10" max="300" step="10" value="80">
+      <span class="num" id="cooling-duration-val">80</span>
+    </div>
+  </div>
+
+  <!-- Layoffs -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">Layoffs</span>
+      <input type="checkbox" id="layoffs" checked>
+    </div>
+    <div class="row">
+      <label>Rate / outlet</label>
+      <input type="range" id="layoff-rate" min="0.001" max="0.05" step="0.001" value="0.005">
+      <span class="num" id="layoff-rate-val">0.005</span>
+    </div>
+    <div class="row">
+      <label>Pub reduction</label>
+      <input type="range" id="layoff-effect" min="0.05" max="0.5" step="0.05" value="0.2">
+      <span class="num" id="layoff-effect-val">0.2</span>
+    </div>
+    <div class="row">
+      <label>Copy boost</label>
+      <input type="range" id="layoff-copy-boost" min="0.01" max="0.2" step="0.01" value="0.05">
+      <span class="num" id="layoff-copy-boost-val">0.05</span>
+    </div>
+  </div>
+
+  <!-- Acquisitions -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">Acquisitions</span>
+      <input type="checkbox" id="acquisitions" checked>
+    </div>
+    <div class="row">
+      <label>Rate / tick</label>
+      <input type="range" id="acquisition-rate" min="0.0005" max="0.005" step="0.0005" value="0.001">
+      <span class="num" id="acquisition-rate-val">0.001</span>
+    </div>
+    <div class="row">
+      <label>Pub boost</label>
+      <input type="range" id="acquisition-boost" min="1" max="2" step="0.05" value="1.3">
+      <span class="num" id="acquisition-boost-val">1.3</span>
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div class="section legend">
+    <div class="legend-row"><div class="swatch" style="background:#141414;border:1px solid #444"></div>Article</div>
+    <div class="legend-row"><div class="swatch" style="background:#dc2828"></div>Error (fact-checked)</div>
+    <div class="legend-row"><div class="swatch" style="background:#a0a0a0"></div>Cooling (trust damage)</div>
+    <div class="legend-row"><div class="swatch" style="background:#f5f5f5;border:1px solid #555"></div>Empty</div>
+    <div class="legend-row"><div class="swatch" style="background:linear-gradient(135deg,#e04040,#40e040,#4040e0)"></div>Outlet centroid</div>
+  </div>
+
+  <!-- Live stats -->
+  <div class="section">
+    <div class="stats-grid">
+      <div>Articles</div><div><span id="stat-articles">0</span></div>
+      <div>Errors</div>  <div><span id="stat-errors">0</span></div>
+      <div>Cooling</div> <div><span id="stat-cooling">0</span></div>
+      <div>Outlets</div> <div><span id="stat-outlets">8</span></div>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="main.js"></script>
+</body>
+</html>
