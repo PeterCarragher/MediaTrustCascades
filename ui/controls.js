@@ -11,8 +11,9 @@ export function readParams() {
     errorRate:         val('error-rate'),
     errorMean:      val('error-mean'),
     errorStd:       val('error-std'),
-    copyLikelihood: val('copy-likelihood'),
-    proximity:      val('proximity'),
+    copyLikelihood:            val('copy-likelihood'),
+    contagionThreshold:        val('contagion-threshold'),
+    propagationResetThreshold: val('propagation-reset-threshold'),
   }
 }
 

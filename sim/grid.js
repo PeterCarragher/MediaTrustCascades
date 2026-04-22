@@ -3,8 +3,9 @@ export class Grid {
     this.width       = width
     this.height      = height
     this.trust       = new Float32Array(width * height).fill(1.0)
-    this.lastEventId = new Uint32Array(width * height)  // 0 = never hit
-    this.front       = new Map()  // eventId → Set<idx>
+    this.lastEventId       = new Uint32Array(width * height)  // 0 = never hit
+    this.propagatingErrorId = new Uint32Array(width * height)  // 0 = not propagating
+    this.front             = new Map()  // eventId → Set<idx>
   }
 
   idx(x, y)      { return y * this.width + x }
